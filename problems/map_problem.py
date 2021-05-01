@@ -118,8 +118,18 @@ class MapProblem(GraphProblem):
         #           (2.3) `link.compute_current_time()` where `self.cost_func_name` equals to 'current_time'.
         #  Note: Generally, in order to check whether a variable is set to None you should use the expression:
         #        `my_variable_to_check is None`, and particularly do NOT use comparison (==).
-
-        yield OperatorResult(successor_state=MapState(self.target_junction_id), operator_cost=7)  # TODO: remove this line!
+        # do we need to check none if assert was there??
+        if junction is None:
+            return "Junction not found"
+        for link in junction.outgoing_links:
+            if link is None:
+                continue
+            if self.cost_func_name == 'current_time':
+                yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.compute_current_time())
+            elif self.cost_func_name == 'scheduled_time':
+                yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.compute_scheduled_time())
+            elif self.cost_func_name == 'distance':
+                yield OperatorResult(successor_state=MapState(link.target), operator_cost=link.distance)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -130,5 +140,5 @@ class MapProblem(GraphProblem):
         # TODO [Ex.9]: modify the returned value to indicate whether `state` is a final state.
         # You may use the problem's input parameters (stored as fields of this object by the constructor).
         
-        return state.junction_id == 14593  # TODO: modify this!
-        
+        return state.junction_id == self.target_junction_id
+
