@@ -161,6 +161,11 @@ def map_problem_experiments():
     # TODO [Ex.18]: create an instance of `AStar` with the `TimeBasedAirDistHeuristic`,
     #       and use the default value for the heuristic_weight,  
     #       solve the same `map_problem` with it and print the results (as before).
+
+    a_star = AStar(TimeBasedAirDistHeuristic)
+    res3 = a_star.solve_problem(map_problem)
+    print(res3)
+
     exit()  # TODO: remove!
 
     # TODO [Ex.20]:
