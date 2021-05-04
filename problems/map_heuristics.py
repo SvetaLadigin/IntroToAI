@@ -1,3 +1,5 @@
+import math
+
 from framework.consts import Consts
 from framework.ways.streets_map import MAX_ROADS_SPEED
 from framework.graph_search import *
@@ -26,7 +28,11 @@ class TimeBasedAirDistHeuristic(HeuristicFunction):
         assert isinstance(self.problem, MapProblem)
         assert isinstance(state, MapState)
 
-        raise NotImplementedError  # TODO: remove this line!
+        current = self.problem.streets_map.get(state.junction_id)
+        target = self.problem.streets_map.get(self.problem.target_junction_id)
+        dist = current.calc_air_distance_from(target)
+        return dist/MAX_ROADS_SPEED
+        #  raise NotImplementedError  # TODO: remove this line!
 
 
 class ShortestPathsBasedHeuristic(HeuristicFunction):
