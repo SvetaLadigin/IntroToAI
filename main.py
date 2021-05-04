@@ -134,18 +134,38 @@ def map_problem_experiments():
     #           solve the `map_problem` with it and print the results.
     #       3. save the visualization of the path in 'images/UCS_path_time_based.png'
     # You can use the code in the function 'toy_map_problem_experiment' for help.
-    exit()  # TODO: remove!
+
+    map_problem = MapProblem(streets_map, start_point, target_point, 'current_time')
+    ucs = UniformCost()
+    res = ucs.solve_problem(map_problem)
+    print(res)
+
+    # save visualization of the path
+    file_path = os.path.join(Consts.IMAGES_PATH, 'UCS_path_time_based.png')
+    streets_map.visualize(path=res, file_path=file_path)
+
+    #  exit()  # TODO: remove!
 
     # TODO [Ex.16]: create an instance of `AStar` with the `NullHeuristic` (implemented in 
     #       `framework\graph_search\graph_problem_interface.py`),
     #       solve the same `map_problem` with it and print the results (as before).
     # Notice: AStar constructor receives the heuristic *type* (ex: `MyHeuristicClass`),
     #         and NOT an instance of the heuristic (eg: not `MyHeuristicClass()`).
-    exit()  # TODO: remove!
+
+    a_star = AStar(NullHeuristic)
+    res2 = a_star.solve_problem(map_problem)
+    print(res2)
+
+    #  exit()  # TODO: remove!
 
     # TODO [Ex.18]: create an instance of `AStar` with the `TimeBasedAirDistHeuristic`,
     #       and use the default value for the heuristic_weight,  
     #       solve the same `map_problem` with it and print the results (as before).
+
+    a_star = AStar(TimeBasedAirDistHeuristic)
+    res3 = a_star.solve_problem(map_problem)
+    print(res3)
+
     exit()  # TODO: remove!
 
     # TODO [Ex.20]:
