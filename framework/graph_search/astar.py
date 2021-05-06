@@ -80,17 +80,12 @@ class AStar(BestFirstSearch):
             self.open.push_node(successor_node)
         elif self.open.has_state(successor_node.state) is True:
             already_found_node_with_same_state = self.open.get_node_by_state(successor_node.state)
-            if successor_node.g_cost < already_found_node_with_same_state.g_cost :
-                #  already_found_node_with_same_state.g_cost = successor_node.g_cost
-                #  already_found_node_with_same_state.operator_cost = successor_node.operator_cost
+            if successor_node.g_cost < already_found_node_with_same_state.g_cost:
                 self.open.extract_node(already_found_node_with_same_state)
                 self.open.push_node(successor_node)
         else:  # state is in CLOSED
             already_found_node_with_same_state = self.close.get_node_by_state(successor_node.state)
-            if successor_node.g_cost < already_found_node_with_same_state.g_cost :
-                #  already_found_node_with_same_state.g_cost = successor_node.g_cost
-                #  already_found_node_with_same_state.operator_cost = successor_node.operator_cost
-                self.open.push_node(already_found_node_with_same_state)
+            if successor_node.g_cost < already_found_node_with_same_state.g_cost:
+                self.open.push_node(successor_node)
                 self.close.remove_node(already_found_node_with_same_state)
-
         # raise NotImplementedError  # TODO: remove this line!
