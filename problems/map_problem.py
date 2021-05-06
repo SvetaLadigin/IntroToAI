@@ -84,10 +84,20 @@ class MapProblem(GraphProblem):
         #                   Note: the result should be of type np.array.
         #                           you can convert a pd.DataFrame to np.array using pd.DataFrame.to_numpy()
         days_of_the_week = ['Sun', 'Mon', 'Tue', 'Wed'] # optional variable
-        raise NotImplementedError  # TODO: remove this line!
+        #  raise NotImplementedError  # TODO: remove this line!
 
+        # set the data file path
+        target_id = str(self.target_junction_id)
+        path = 'history_4_days_target_' + target_id + '.csv'
+        history_based_file_path = os.path.join(Consts.DATA_PATH, path)
 
-        assert(type(self.time_to_goal_history_based_data) is np.ndarray) # self-check
+        # read the csv file
+        df = pd.read_csv(history_based_file_path)
+        #  calculate mean value for each state
+        df['mean'] = df.mean(axis=1)
+        data = df['mean'].to_numpy()
+        self.time_to_goal_history_based_data = data
+        assert (type(self.time_to_goal_history_based_data) is np.ndarray)  # self-check
 
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
