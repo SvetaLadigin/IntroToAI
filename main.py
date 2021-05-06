@@ -41,9 +41,9 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # See documentation here:
     # https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html
     # You can also Google for additional examples.
-    raise NotImplementedError  # TODO: remove this line!
-    p1, = ax1.plot(...)  # TODO: pass the relevant params instead of `...`.
-
+    #  raise NotImplementedError  # TODO: remove this line!
+    # TODO: pass the relevant params instead of `...`.
+    p1, = ax1.plot(weights, total_cost, 'b', label="total distance")
     # ax1: Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('Solution cost', color='b')
     ax1.tick_params('y', colors='b')
@@ -55,8 +55,9 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Plot the total expanded with ax2. Use `ax2.plot(...)`.
     # TODO: Make this curve colored red with solid line style.
     # TODO: Set its label to be '#Expanded states'.
-    raise NotImplementedError  # TODO: remove this line!
-    p2, = ax2.plot(...)  # TODO: pass the relevant params instead of `...`.
+    #  raise NotImplementedError  # TODO: remove this line!
+    # TODO: pass the relevant params instead of `...`.
+    p2, = ax2.plot(weights,total_nr_expanded, 'r', label="number of developed states")
 
     # ax2: Make the y-axis label, ticks and tick labels match the line color.
     ax2.set_ylabel('#Expanded states', color='r')
@@ -88,8 +89,19 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     #     Don't forget to pass `max_nr_states_to_expand` to the AStar c'tor.
     #  3. Call the function `plot_distance_and_expanded_wrt_weight_figure()`
     #     with these 3 generated lists.
-    raise NotImplementedError  # TODO: remove this line!
-
+    #  raise NotImplementedError  # TODO: remove this line!
+    w_arr = np.linspace(low_heuristic_weight,high_heuristic_weight,n)
+    solution_cost = []
+    num_of_expended_states = []
+    weight = []
+    for w in w_arr:
+        a_star = AStar(heuristic_type,w,max_nr_states_to_expand)
+        res = a_star.solve_problem(problem)
+        if res.is_solution_found:
+            solution_cost.append(res.solution_cost)
+            num_of_expended_states.append(res.nr_expanded_states)
+            weight.append(w)
+    plot_distance_and_expanded_wrt_weight_figure(heuristic_type.heuristic_name,weight,solution_cost,num_of_expended_states)
 
 # --------------------------------------------------------------------
 # ------------------------ StreetsMap Problem ------------------------
@@ -136,28 +148,37 @@ def map_problem_experiments():
     # You can use the code in the function 'toy_map_problem_experiment' for help.
 
     map_problem = MapProblem(streets_map, start_point, target_point, 'current_time')
-
-    USC = UniformCost()
-    res = USC.solve_problem(map_problem)
+    ucs = UniformCost()
+    res = ucs.solve_problem(map_problem)
     print(res)
 
     # save visualization of the path
     file_path = os.path.join(Consts.IMAGES_PATH, 'UCS_path_time_based.png')
     streets_map.visualize(path=res, file_path=file_path)
 
-    exit()  #
+    #  exit()  # TODO: remove!
 
     # TODO [Ex.16]: create an instance of `AStar` with the `NullHeuristic` (implemented in 
     #       `framework\graph_search\graph_problem_interface.py`),
     #       solve the same `map_problem` with it and print the results (as before).
     # Notice: AStar constructor receives the heuristic *type* (ex: `MyHeuristicClass`),
     #         and NOT an instance of the heuristic (eg: not `MyHeuristicClass()`).
-    exit()  # TODO: remove!
+
+    a_star = AStar(NullHeuristic)
+    res2 = a_star.solve_problem(map_problem)
+    print(res2)
+
+    #  exit()  # TODO: remove!
 
     # TODO [Ex.18]: create an instance of `AStar` with the `TimeBasedAirDistHeuristic`,
     #       and use the default value for the heuristic_weight,  
     #       solve the same `map_problem` with it and print the results (as before).
-    exit()  # TODO: remove!
+
+    a_star = AStar(TimeBasedAirDistHeuristic)
+    res3 = a_star.solve_problem(map_problem)
+    print(res3)
+
+    #  exit()  # TODO: remove!
 
     # TODO [Ex.20]:
     #  1. Complete the implementation of the function
@@ -167,21 +188,34 @@ def map_problem_experiments():
     #     (upper in this file).
     #  3. Call here the function `run_astar_for_weights_in_range()`
     #     with `TimeBasedAirDistHeuristic` and `map_problem`.
-    exit()  # TODO: remove!
+    #  exit()  # TODO: remove!
+    run_astar_for_weights_in_range(TimeBasedAirDistHeuristic,map_problem)
+
+
 
     # TODO [Ex.24]: 1. Call the function set_additional_shortest_paths_based_data()
     #                   to set the additional shortest-paths-based data in `map_problem`.
     #                   For more info see `problems/map_problem.py`.
     #               2. create an instance of `AStar` with the `ShortestPathsBasedHeuristic`,
     #                  solve the same `map_problem` with it and print the results (as before).
-    exit()  # TODO: remove!
-    
+    #  exit()  # TODO: remove!
+    map_problem.set_additional_shortest_paths_based_data()
+
+    a_star = AStar(ShortestPathsBasedHeuristic)
+    res4 = a_star.solve_problem(map_problem)
+    print(res4)
+
+
     # TODO [Ex.25]: 1. Call the function set_additional_history_based_data()
     #                   to set the additional history-based data in `map_problem`.
     #                   For more info see `problems/map_problem.py`.
     #               2. create an instance of `AStar` with the `HistoryBasedHeuristic`,
     #                   solve the same `map_problem` with it and print the results (as before).
-    exit()  # TODO: remove!
+    #  exit()  # TODO: remove!
+    map_problem.set_additional_history_based_data()
+    a_star = AStar(HistoryBasedHeuristic)
+    res5 = a_star.solve_problem(map_problem)
+    print(res5)
 
     # Try using A*eps to improve the speed (#dev) with a non-acceptable heuristic.
     # TODO [Ex.29]: Create an instance of `AStarEpsilon` with the `ShortestPathsBasedHeuristic`.
