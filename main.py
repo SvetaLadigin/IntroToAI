@@ -1,12 +1,11 @@
 from framework.graph_search.astar import AStar
-from framework import * 
+from framework import *
 from problems import *
 
 from matplotlib import pyplot as plt
 import numpy as np
 from typing import List, Union, Optional
 import os
-
 
 # Load the streets map
 streets_map = StreetsMap.load_from_csv(Consts.get_data_file_path("tlv_streets_map_cur_speeds.csv"))
@@ -57,7 +56,7 @@ def plot_distance_and_expanded_wrt_weight_figure(
     # TODO: Set its label to be '#Expanded states'.
     #  raise NotImplementedError  # TODO: remove this line!
     # TODO: pass the relevant params instead of `...`.
-    p2, = ax2.plot(weights,total_nr_expanded, 'r', label="number of developed states")
+    p2, = ax2.plot(weights, total_nr_expanded, 'r', label="number of developed states")
 
     # ax2: Make the y-axis label, ticks and tick labels match the line color.
     ax2.set_ylabel('#Expanded states', color='r')
@@ -90,18 +89,20 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     #  3. Call the function `plot_distance_and_expanded_wrt_weight_figure()`
     #     with these 3 generated lists.
     #  raise NotImplementedError  # TODO: remove this line!
-    w_arr = np.linspace(low_heuristic_weight,high_heuristic_weight,n)
+    w_arr = np.linspace(low_heuristic_weight, high_heuristic_weight, n)
     solution_cost = []
     num_of_expended_states = []
     weight = []
     for w in w_arr:
-        a_star = AStar(heuristic_type,w,max_nr_states_to_expand)
+        a_star = AStar(heuristic_type, w, max_nr_states_to_expand)
         res = a_star.solve_problem(problem)
         if res.is_solution_found:
             solution_cost.append(res.solution_cost)
             num_of_expended_states.append(res.nr_expanded_states)
             weight.append(w)
-    plot_distance_and_expanded_wrt_weight_figure(heuristic_type.heuristic_name,weight,solution_cost,num_of_expended_states)
+    plot_distance_and_expanded_wrt_weight_figure(heuristic_type.heuristic_name, weight, solution_cost,
+                                                 num_of_expended_states)
+
 
 # --------------------------------------------------------------------
 # ------------------------ StreetsMap Problem ------------------------
@@ -113,6 +114,7 @@ def within_focal_h_sum_priority_function(node: SearchNode, problem: GraphProblem
     focal_heuristic = getattr(solver, '__focal_heuristic')
     return focal_heuristic.estimate(node.state)
 
+
 def toy_map_problem_experiment():
     print()
     print('Solve the distance-based map problem.')
@@ -121,16 +123,17 @@ def toy_map_problem_experiment():
 
     target_point = 549
     start_point = 82700
-    
-    dist_map_problem = MapProblem(streets_map, start_point, target_point, 'distance') 
-    
+
+    dist_map_problem = MapProblem(streets_map, start_point, target_point, 'distance')
+
     uc = UniformCost()
     res = uc.solve_problem(dist_map_problem)
     print(res)
-    
+
     # save visualization of the path
     file_path = os.path.join(Consts.IMAGES_PATH, 'UCS_path_distance_based.png')
     streets_map.visualize(path=res, file_path=file_path)
+
 
 def map_problem_experiments():
     print()
@@ -189,9 +192,7 @@ def map_problem_experiments():
     #  3. Call here the function `run_astar_for_weights_in_range()`
     #     with `TimeBasedAirDistHeuristic` and `map_problem`.
     #  exit()  # TODO: remove!
-    run_astar_for_weights_in_range(TimeBasedAirDistHeuristic,map_problem)
-
-
+    run_astar_for_weights_in_range(TimeBasedAirDistHeuristic, map_problem)
 
     # TODO [Ex.24]: 1. Call the function set_additional_shortest_paths_based_data()
     #                   to set the additional shortest-paths-based data in `map_problem`.
@@ -204,7 +205,6 @@ def map_problem_experiments():
     a_star = AStar(ShortestPathsBasedHeuristic)
     res4 = a_star.solve_problem(map_problem)
     print(res4)
-
 
     # TODO [Ex.25]: 1. Call the function set_additional_history_based_data()
     #                   to set the additional history-based data in `map_problem`.
@@ -223,7 +223,14 @@ def map_problem_experiments():
     #       Use focal_epsilon=0.23, and max_focal_size=40.
     #       Use within_focal_priority_function=within_focal_h_sum_priority_function. This function
     #        (defined just above) is internally using the `HistoryBasedHeuristic`.
-    exit()  # TODO: remove!
+    map_problem.set_additional_history_based_data()
+    a_star_epsilon = AStarEpsilon(ShortestPathsBasedHeuristic,
+                                  focal_epsilon=0.23,
+                                  max_focal_size=40,
+                                  within_focal_priority_function=within_focal_h_sum_priority_function)
+    res6 = a_star_epsilon.solve_problem(map_problem)
+    print(res6)
+    # exit()  # TODO: remove!
 
 
 def run_all_experiments():

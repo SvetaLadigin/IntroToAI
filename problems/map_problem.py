@@ -57,9 +57,10 @@ class MapProblem(GraphProblem):
 
         # set the data file path
         shortest_paths_file_path = os.path.join(Consts.DATA_PATH, 'shortest_paths.csv')
-        
+        filename = 'history_4_days_target_'+str(self.target_junction_id)
         # read the csv file
-        df = pd.read_csv(shortest_paths_file_path) 
+        df = pd.read_csv(shortest_paths_file_path)
+
         
         # self-check, if the data file includes self.target_junction_id 
         assert(str(self.target_junction_id) in df.columns)

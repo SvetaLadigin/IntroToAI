@@ -71,23 +71,39 @@ class AStarEpsilon(AStar):
          method should be kept in the open queue at the end of this method, except
          for the extracted (and returned) node.
         """
-
         if self.open.is_empty():
             return None
-        min_node = self.open.pop_next_node()
-        if self.max_focal_size is not None:
-            max_focal_size = self.max_focal_size
-        max_expanding_priority = (1 + self.focal_epsilon) * min_node.expanding_priority
-        focal_list = []
+        # Variables
         counter = 0
-        for node in self.open:
+        focal_list = []
+        priority_focal_list = []
+        return_list = []
+        # Calculate the max expansion
+        min_node = self.open.peek_next_node()
+        max_expanding_priority = (1+self.focal_epsilon) * min_node.expanding_priority
+        # Filling the FOCAL
+        while not self.open.is_empty():
             if self.max_focal_size is not None:
-                if counter >= max_focal_size:
+                if counter == self.max_focal_size:
                     break
-            if node.expanding_priority <= max_expanding_priority:
-                focal_list.append(node)
-            else:
-                break
+            curr_node = self.open.pop_next_node()
+            if curr_node.expanding_priority <= max_expanding_priority:
+                focal_list.append(curr_node)
+            return_list.append(curr_node)
 
-
-        raise NotImplementedError  # TODO: remove!
+            counter = counter+1
+        # Calculating priority
+        for item in focal_list:
+            priority_focal_list.append(self.within_focal_priority_function(item, problem, self))
+        priority_arr = np.array(priority_focal_list)
+        index_of_node_to_return = priority_arr.argmin()
+        node_toreturn = focal_list.pop(index_of_node_to_return)
+        return_list.remove(node_toreturn)
+        # Pushing back
+        return_list.reverse()
+        for item in return_list:
+            if item is not None:
+                self.open.push_node(item)
+        # Adding the found node to closed
+        self.close.add_node(node_toreturn)
+        return node_toreturn
