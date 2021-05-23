@@ -78,10 +78,10 @@ class ImprovedGreedyMovePlayer(AbstractMovePlayer):
             for col in range(4):
                 if copy_board[row][col] != 0:
                     if copy_board[row][3] != 0:
-                        counter += abs(self.log2(copy_board[row][col]) - self.log2(
+                        counter += abs((copy_board[row][col]) - (
                             copy_board[row][3]))
                     if copy_board[3][col] != 0:
-                        counter += abs(self.log2(copy_board[row][col]) - self.log2(
+                        counter += abs((copy_board[row][col]) - (
                             copy_board[3][col]))
         print('smoothness score '+str(counter))
         return counter
@@ -122,8 +122,6 @@ class ImprovedGreedyMovePlayer(AbstractMovePlayer):
     def monotonus(self, board):
 
         copy_board = board
-        self.logBoard(copy_board)
-
         asndud = 0
         dsndud = 0
         asndlr = 0
@@ -144,16 +142,20 @@ class ImprovedGreedyMovePlayer(AbstractMovePlayer):
         return max(dsndlr, asndlr) + max(dsndud, asndud)
 
     def logBoard(self, board):
+        copy_board = board
         for row in range(4):
             for col in range(4):
                 if board[row][col] != 0:
-                    board[row][col] = self.log2(board[row][col])
+                    copy_board[row][col] = self.log2(copy_board[row][col])
+                else:
+                    copy_board[row][col] = 0
+        return copy_board
+
 
 # --------------Greedy func that return score --------------
 
     def score(self, board):
         copy_board = board
-        self.logBoard(copy_board)
         cells_sum = 0
         for row in range(4):
             for col in range(4):
@@ -162,22 +164,28 @@ class ImprovedGreedyMovePlayer(AbstractMovePlayer):
         return cells_sum
 
     def maxCellValue(self, board):
+        copy_board = board
+        # print(copy_board)
         max_value = 0
         for row in range(4):
             for col in range(4):
-                if self.log2(board[row][col]) > max_value:
-                    max_value = self.log2(board[row][col])
+                # print(copy_board[row][col])
+                if copy_board[row][col] > max_value:
+                    max_value = copy_board[row][col]
         print('cell_max_value: ' + str(max_value))
         return max_value
 
     def calculateNewHScore(self, board):
-        greedy_score = self.score(board)
-        max_value_cell = self.maxCellValue(board)
-        fragmantation_value = self.fragmentation(board)
-        smoothness_score = self.smoothness(board)
-        monoton_score = self.monotonus(board)
-        
-        return float(greedy_score)*0.2+max_value_cell*0.2+smoothness_score*0.2+monoton_score*0.2-fragmantation_value*0.2
+        save_board = [row[:] for row in board]
+        # for i in range(4):
+        #     save_board.append(board[i])
+        logged_board = self.logBoard(save_board)
+        greedy_score = self.score(logged_board)
+        max_value_cell = self.maxCellValue(logged_board)
+        fragmantation_value = self.fragmentation(logged_board)
+        smoothness_score = self.smoothness(logged_board)
+        monoton_score = self.monotonus(logged_board)
+        return float(greedy_score)*0.5+max_value_cell*0.5+smoothness_score*0.2+monoton_score*0.2-fragmantation_value*0.2
 # ---------------- GET MOVE USING NEW HEURISTICS ---------------
 
     def get_move(self, board, time_limit) -> Move:
@@ -185,7 +193,7 @@ class ImprovedGreedyMovePlayer(AbstractMovePlayer):
         for move in Move:
             new_board, done, score = commands[move](board)
             if done:
-                optional_moves_score[move] = self.calculateNewHScore(new_board)
+                optional_moves_score[move] = self.calculateNewHScore(board)
                 print("move: "+move.value+' heuristic count: '+str(optional_moves_score[move]))
 
         return max(optional_moves_score, key=optional_moves_score.get)
