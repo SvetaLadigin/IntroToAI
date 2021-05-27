@@ -28,8 +28,6 @@ class GreedyMovePlayer(AbstractMovePlayer):
             new_board, done, score = commands[move](board)
             if done:
                 optional_moves_score[move] = score
-                # print("the optional_moves_score: "+str(move)+" in optional move_score[move] "+str(optional_moves_score))
-        # print("greedy move : "+str(max(optional_moves_score, key=optional_moves_score.get)))
         return max(optional_moves_score, key=optional_moves_score.get)
 
 
@@ -346,11 +344,92 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
     """
     def __init__(self):
         AbstractMovePlayer.__init__(self)
+        self.max_depth = 1
+        self.active_player = "PLAYER"
         # TODO: add here if needed
 
+    def calcCellScore(self,value):
+        if value <=2:
+            return 0
+        return 2*self.calcCellScore(value/2) + 2**self.log2(value)
+
+    def get_score(self, board):
+        cells_sum = 0
+        for row in range(4):
+            for col in range(4):
+                 cells_sum += self.calcCellScore(board[row][col])
+        return cells_sum
+
+    def get_available_moves(self, board):
+        optional_moves_score = {}
+        for move in Move:
+            new_board, done, score = commands[move](board)
+            if done:
+                optional_moves_score[move] = score
+        return optional_moves_score
+
     def get_move(self, board, time_limit) -> Move:
-        # TODO: erase the following line and implement this function.
-        raise NotImplementedError
+        optional_moves_score = {}
+        for move in Move:
+            new_board, done, score = commands[move](board)
+            if done:
+                optional_moves_score[move] = self.calculateNewHScore(new_board)
+                print("move: "+move.value+' heuristic count: '+str(optional_moves_score[move]))
+
+        # return max(optional_moves_score, key=optional_moves_score.get)
+
+        # TODO: do we really need iterative deepening or not?
+        # Iterative deepening
+        d = self.max_depth
+        counter = 10
+        while(counter): # TODO WE DONT HAVE MAX DEPTH WE HAVE TIME
+            move, score = self.search(board, float('-inf'), float('inf'), 1, d)
+            if score > max_score:
+                max_score = score
+                max_move = move
+
+        return max_move
+
+    def search(self, board, alpha, beta, depth, max_depth):
+        """The implementation of the minimax search with alpha-beta pruning"""
+        # Evaluate when possible
+        if depth > max_depth or logic.game_state(board) == 'lose':
+            return self.get_score(board)
+
+        # Agent's turn
+        if self.active_player == 'PLAYER':
+            moves = self.get_available_moves(board)
+            result_move = moves[0]
+            v = float('-inf')
+            # Go through all possible moves
+            for m in moves:
+                board_copy = board.copy()
+                board_copy.perform_move(m)
+                prev_v = v
+                v = max(v, self.search(board_copy, alpha, beta, depth + 1, max_depth))
+                if v > prev_v and depth == 1:
+                    result_move = m
+                if v >= beta:
+                    return v
+                alpha = max(alpha, v)
+            if depth == 1:
+                return result_move, v
+            return v
+        else:
+            available_tiles = board.empty_tiles()
+            v = float('inf')
+            for tile in available_tiles:
+                board_copy = board.copy()
+                board_copy.fill_specific_empty_tile(tile)
+                # Switch player here
+                board_copy.switch_player()
+                v = min(v, self.search(board_copy, alpha, beta, depth + 1, max_depth))
+                if v <= alpha:
+                    return v
+                beta = min(beta, v)
+            if depth == 1:
+                return '', v
+            return v
 
     # TODO: add here helper functions in class, if needed
 

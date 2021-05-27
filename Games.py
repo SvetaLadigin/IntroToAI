@@ -52,7 +52,7 @@ class CustomGame(GameGrid):
         while True:
             if self.curr_agent == Turn.MOVE_PLAYER_TURN:
                 start = time.time()
-                move = self.move_player.get_move(copy.deepcopy(self.matrix), self.move_time_limit)
+                move = self.move_player.get_avaliable_moves(copy.deepcopy(self.matrix), self.move_time_limit)
                 end = time.time()
                 time_diff = end - start
                 #print(time_diff)
