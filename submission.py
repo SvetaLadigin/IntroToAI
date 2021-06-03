@@ -229,7 +229,6 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
                     new_board = copy.deepcopy(board)
                     new_board[i][j] = 2
                     boards.append(new_board)
-
         return boards
 
 # score move by making greedy on all optional moves
@@ -245,115 +244,6 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
             if val == value:
                 return key
         return None
-
-    def minimax(self, board, depth, time_limit):
-        current_time = time.time()
-        if depth == 0:
-            return self.score(board)
-        # best_value = 0 # Dont know if to initialize because return value
-        if self.active_player == 'MAXIPLAYER':
-            best_value = -math.inf
-            for move in Move:
-                new_board, done, score = commands[move](board)
-                if done:
-                    self.change_player('MINIPLAYER')
-                    val = self.minimax(new_board, depth - 1, time_limit-current_time)
-                    best_value = max(best_value, val)
-            return best_value
-
-        else:  # self.active_player == 'MINIPLAYER':
-            best_value = math.inf
-            optional_boards = self.generate_optional_boards(board)
-            for optional_board in optional_boards:
-                self.change_player('MAXIPLAYER')
-                val = self.minimax(optional_board, depth - 1, time_limit-current_time)
-                best_value = min(best_value, val)
-            return best_value
-
-
-
-    def get_move(self, board, time_limit) -> Move:
-    # TODO TIME MANAGEMENT
-    # TODO DEPTH MANAGEMENT
-        depth = 1
-        prev_time = 0
-        time_left = time_limit
-        ret_value = 0
-        while ((time_left - prev_time) >= 2 ** prev_time):
-            start_time = time.time()
-            optional_moves_score = {}
-            for move in Move:
-                new_board, done, score = commands[move](board)
-                if done:
-                    optional_moves_score[move] = self.minimax(new_board, depth, time_limit)
-            ret_value = max(optional_moves_score, key=optional_moves_score.get)
-            print(depth)
-            depth += 1
-            end_time = time.time()
-            prev_time = end_time - start_time
-            time_left = time_left - prev_time
-            print('left_time' + str(time_left))
-            print('prev_time' + str(prev_time))
-        return ret_value
-
-    # TODO RETURN MAX MOVE
-    # the function flow: on maxiplayer -> recursion on max total boards scores per move
-    #                    on miniplayer -> recursion on min total boards scores per move
-
-
-
-
-
-
-class MiniMaxIndexPlayer(AbstractIndexPlayer):
-    """MiniMax Index Player,
-    this player is the opponent of the move player and need to return the indices on the board where to put 2.
-    the goal of the player is to reduce move player score.
-    implement get_indices function according to MiniMax algorithm, the value in minimax player value is only 2.
-    (you can add helper functions as you want).
-    """
-
-    ## for board we should greedy calculate the moves score and do the same
-    def __init__(self):
-        AbstractIndexPlayer.__init__(self)
-        self.active_player = 'MAXIPLAYER'
-        # TODO: add here if needed
-
-    def change_player(self, player):
-        self.active_player = player
-
-    def calcCellScore(self, value):
-        if value <=2:
-            return 0
-        return 2*self.calcCellScore(value/2) + value
-
-    def score(self, board):
-        cells_sum = 0
-        for row in range(4):
-            for col in range(4):
-                 cells_sum += self.calcCellScore(board[row][col])
-        return cells_sum
-
-    def generate_optional_boards(self, board):
-        boards = list()
-        for i in range(4):
-            for j in range(4):
-                if board[i][j] == 0:
-                    new_board = copy.deepcopy(board)
-                    new_board[i][j] = 2
-                    boards.append(new_board)
-        return boards
-
-    # def get_optional_move_scores_by_board(self, boards):
-    #     for board in boards:
-    #         optional_moves_score = self.get_move(board)
-    #         if self.active_player == 'MAXIPLAYER':
-    #             return max(optional_moves_score, key=optional_moves_score.get)
-    #         elif self.active_player == 'MINIPLAYER':
-    #             return min(optional_moves_score, key=optional_moves_score.get)
-    #         else:
-    #             return None # or something else
-
 
     def minimax(self, board, depth):
         if depth == 0:
@@ -380,23 +270,99 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
 
 
 
-# if UP -> we put in [0][k]
-# if down -> we put in [3][k], etc.
-
-    def board_hash(self,board):
-        for i in range(4):
-            board[i] = tuple(i)
-
-
-    def get_indices(self, board, value, time_limit) -> (int, int):
-        # TODO TIME MANAGEMENT
-        # TODO DEPTH MANAGEMENT
-        depth = 1
+    def get_move(self, board, time_limit) -> Move:
+        depth = 0
         prev_time = 0
         time_left = time_limit
+        ret_value = 0
+        while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
+            start_time = time.time()
+            optional_moves_score = {}
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    optional_moves_score[move] = self.minimax(new_board, depth)
+            ret_value = max(optional_moves_score, key=optional_moves_score.get)
+            print(depth)
+            depth += 1
+            end_time = time.time()
+            prev_time = float(end_time - start_time)
+            time_left = float(time_left - prev_time)
+            print(time_left)
+        return ret_value
 
+    # the function flow: on maxiplayer -> recursion on max total boards scores per move
+    #                    on miniplayer -> recursion on min total boards scores per move
+
+
+class MiniMaxIndexPlayer(AbstractIndexPlayer):
+    """MiniMax Index Player,
+    this player is the opponent of the move player and need to return the indices on the board where to put 2.
+    the goal of the player is to reduce move player score.
+    implement get_indices function according to MiniMax algorithm, the value in minimax player value is only 2.
+    (you can add helper functions as you want).
+    """
+
+    ## for board we should greedy calculate the moves score and do the same
+    def __init__(self):
+        AbstractIndexPlayer.__init__(self)
+        self.active_player = 'MAXIPLAYER'
+
+    def change_player(self, player):
+        self.active_player = player
+
+    def calcCellScore(self, value):
+        if value <=2:
+            return 0
+        return 2*self.calcCellScore(value/2) + value
+
+    def score(self, board):
+        cells_sum = 0
+        for row in range(4):
+            for col in range(4):
+                 cells_sum += self.calcCellScore(board[row][col])
+        return cells_sum
+
+    def generate_optional_boards(self, board):
+        boards = list()
+        for i in range(4):
+            for j in range(4):
+                if board[i][j] == 0:
+                    new_board = copy.deepcopy(board)
+                    new_board[i][j] = 2
+                    boards.append(new_board)
+        return boards
+
+    def minimax(self, board, depth):
+        if depth == 0:
+            return self.score(board)
+        # best_value = 0 # Dont know if to initialize because return value
+        if self.active_player == 'MAXIPLAYER':
+            best_value = -math.inf
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    self.change_player('MINIPLAYER')
+                    val = self.minimax(new_board, depth - 1)
+                    best_value = max(best_value, val)
+            return best_value
+
+        else:  # self.active_player == 'MINIPLAYER':
+            best_value = math.inf
+            optional_boards = self.generate_optional_boards(board)
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val = self.minimax(optional_board, depth - 1)
+                best_value = min(best_value, val)
+            return best_value
+
+    def get_indices(self, board, value, time_limit) -> (int, int):
+        depth = 0
+        prev_time = 0
+        time_left = time_limit
         ret_value = (0, 0)
-        while((time_left - prev_time) >= 2**prev_time):
+
+        while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
             start_time = time.time()
             index = 0
             dict_board_score = {}
@@ -406,7 +372,6 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
                 index += 1
             found_min_board = min(dict_board_score, key=dict_board_score.get)
             board_to_compare = optional_boards[found_min_board]
-
             for i in range(4):
                 for j in range(4):
                     if board_to_compare[i][j] != board[i][j]:
@@ -414,14 +379,13 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
             print(depth)
             depth += 1
             end_time = time.time()
-            prev_time = end_time-start_time
+            prev_time = end_time - start_time
             time_left = time_left - prev_time
-            print('left_time'+str(time_left))
-            print('prev_time'+str(prev_time))
+            print(time_left)
+            print('board'+str(board))
         return ret_value
 
 
-    # TODO: add here helper functions in class, if needed
 
 
 # part C
@@ -430,16 +394,110 @@ class ABMovePlayer(AbstractMovePlayer):
     implement get_move function according to Alpha Beta MiniMax algorithm
     (you can add helper functions as you want)
     """
-    def __init__(self):
-        AbstractMovePlayer.__init__(self)
-        # TODO: add here if needed
 
-    def get_move(self, board, time_limit) -> Move:
-        # TODO: erase the following line and implement this function.
-        raise NotImplementedError
 
     # TODO: add here helper functions in class, if needed
+    def __init__(self):
+        AbstractMovePlayer.__init__(self)
+        self.active_player = 'MINIPLAYER'  # get move starts with Max Player
+        # TODO: add here if needed
 
+    def change_player(self, player):
+        self.active_player = player
+
+# WE CAN CALCULATE TIME FOR 1 BOARD SUCCESSORS INITIALIZATION AND THEN FOR TIME LIMIT
+# MULTIPLY BY 2^DEPTH
+
+    def calcCellScore(self,value):
+        if value <=2:
+            return 0
+        return 2*self.calcCellScore(value/2) + value
+
+    def score(self, board):
+        cells_sum = 0
+        for row in range(4):
+            for col in range(4):
+                 cells_sum += self.calcCellScore(board[row][col])
+        return cells_sum
+
+    # GET THE NEXT SUCCESSORS OF A CERTAIN BOARD
+    def generate_optional_boards(self, board):
+        boards = list()
+        for i in range(4):
+            for j in range(4):
+                if board[i][j] == 0:
+                    new_board = copy.deepcopy(board)
+                    new_board[i][j] = 2
+                    boards.append(new_board)
+        return boards
+
+# score move by making greedy on all optional moves
+    def score_move(self, boards):
+        total_score_for_boards = 0
+        for board in boards:
+            total_score_for_boards = total_score_for_boards + self.score(board)
+        return total_score_for_boards
+
+# get key by value for dict
+    def get_key(self, dict, val):
+        for key, value in dict.items():
+            if val == value:
+                return key
+        return None
+
+    def minimax(self, board, depth, alpha, beta):
+        if depth == 0:
+            return self.score(board)
+        # best_value = 0 # Dont know if to initialize because return value
+        if self.active_player == 'MAXIPLAYER':
+            best_value = -math.inf
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    self.change_player('MINIPLAYER')
+                    val = self.minimax(new_board, depth - 1,alpha,beta)
+                    best_value = max(best_value, val)
+                    alpha = max(best_value,alpha)
+                    if best_value >= beta:
+                        return math.inf
+            return best_value
+
+        else:  # self.active_player == 'MINIPLAYER':
+            best_value = math.inf
+            optional_boards = self.generate_optional_boards(board)
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val = self.minimax(optional_board, depth - 1,alpha,beta)
+                best_value = min(best_value, val)
+                beta = max(best_value, beta)
+                if best_value <= alpha:
+                    return -math.inf
+            return best_value
+
+
+
+    def get_move(self, board, time_limit) -> Move:
+        depth = 0
+        alpha = -math.inf
+        beta = math.inf
+        prev_time = 0
+        time_left = time_limit
+        ret_value = 0
+        while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
+            start_time = time.time()
+            optional_moves_score = {}
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    optional_moves_score[move] = self.minimax(new_board, depth,alpha,beta)
+            ret_value = max(optional_moves_score, key=optional_moves_score.get)
+            print(depth)
+            depth += 1
+            end_time = time.time()
+            prev_time = float(end_time - start_time)
+            time_left = float(time_left - prev_time)
+            print(time_left)
+        return ret_value
 
 # part D
 class ExpectimaxMovePlayer(AbstractMovePlayer):
