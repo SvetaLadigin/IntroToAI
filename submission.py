@@ -505,15 +505,102 @@ class ExpectimaxMovePlayer(AbstractMovePlayer):
     implement get_move function according to Expectimax algorithm.
     (you can add helper functions as you want)
     """
+
     def __init__(self):
         AbstractMovePlayer.__init__(self)
-        # TODO: add here if needed
+        self.active_player = 'MINIPLAYER'  # get move starts with Max Player
+
+    def change_player(self, player):
+        self.active_player = player
+
+    # WE CAN CALCULATE TIME FOR 1 BOARD SUCCESSORS INITIALIZATION AND THEN FOR TIME LIMIT
+    # MULTIPLY BY 2^DEPTH
+
+    def calcCellScore(self, value):
+        if value <= 2:
+            return 0
+        return 2 * self.calcCellScore(value / 2) + value
+
+    def score(self, board):
+        cells_sum = 0
+        for row in range(4):
+            for col in range(4):
+                cells_sum += self.calcCellScore(board[row][col])
+        return cells_sum
+
+    # GET THE NEXT SUCCESSORS OF A CERTAIN BOARD
+    def generate_optional_boards(self, board, value):
+        boards = list()
+        for i in range(4):
+            for j in range(4):
+                if board[i][j] == 0:
+                    new_board = copy.deepcopy(board)
+                    new_board[i][j] = value
+                    boards.append(new_board)
+        return boards
+
+    # score move by making greedy on all optional moves
+    def score_move(self, boards):
+        total_score_for_boards = 0
+        for board in boards:
+            total_score_for_boards = total_score_for_boards + self.score(board)
+        return total_score_for_boards
+
+    # get key by value for dict
+    def get_key(self, dict, val):
+        for key, value in dict.items():
+            if val == value:
+                return key
+        return None
+
+    def expectimax(self, board, depth):
+        if depth == 0:
+            return self.score(board)
+        # best_value = 0 # Dont know if to initialize because return value
+        if self.active_player == 'MAXIPLAYER':
+            best_value = -math.inf
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    self.change_player('MINIPLAYER')
+                    val = self.expectimax(new_board, depth - 1)
+                    best_value = max(best_value, val)
+            return best_value
+
+        else:  # self.active_player == 'MINIPLAYER':
+            avg = 0
+            optional_boards = self.generate_optional_boards(board,2)
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val_2 = self.expectimax(optional_board, depth - 1)
+                avg += 0.9*val_2
+            optional_boards = self.generate_optional_boards(board, 4)
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val_4 = self.expectimax(optional_board, depth - 1)
+                avg += 0.1 * val_4
+            return avg
 
     def get_move(self, board, time_limit) -> Move:
-        # TODO: erase the following line and implement this function.
-        raise NotImplementedError
-
-    # TODO: add here helper functions in class, if needed
+        depth = 0
+        prev_time = 0
+        time_left = time_limit
+        ret_value = 0
+        while time_left > (2 ** (depth - 1)) * prev_time and time_left > 0.02:
+            start_time = time.time()
+            optional_moves_score = {}
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    optional_moves_score[move] = self.expectimax(new_board, depth)
+            ret_value = max(optional_moves_score, key=optional_moves_score.get)
+            print(depth)
+            depth += 1
+            end_time = time.time()
+            prev_time = float(end_time - start_time)
+            time_left = float(time_left - prev_time)
+            print(time_left)
+        return ret_value
 
 
 class ExpectimaxIndexPlayer(AbstractIndexPlayer):
@@ -523,13 +610,93 @@ class ExpectimaxIndexPlayer(AbstractIndexPlayer):
     """
     def __init__(self):
         AbstractIndexPlayer.__init__(self)
-        # TODO: add here if needed
+        self.active_player = 'MAXIPLAYER'
+
+
+    def change_player(self, player):
+        self.active_player = player
+
+    def calcCellScore(self, value):
+        if value <=2:
+            return 0
+        return 2*self.calcCellScore(value/2) + value
+
+    def score(self, board):
+        cells_sum = 0
+        for row in range(4):
+            for col in range(4):
+                 cells_sum += self.calcCellScore(board[row][col])
+        return cells_sum
+
+    def generate_optional_boards(self, board, value):
+        boards = list()
+        for i in range(4):
+            for j in range(4):
+                if board[i][j] == 0:
+                    new_board = copy.deepcopy(board)
+                    new_board[i][j] = value
+                    boards.append(new_board)
+        return boards
+
+    def expectimax(self, board, depth, p):
+        if depth == 0:
+            return self.score(board)
+        # best_value = 0 # Dont know if to initialize because return value
+        if self.active_player == 'MAXIPLAYER':
+            best_value = -math.inf
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    self.change_player('MINIPLAYER')
+                    val = self.expectimax(new_board, depth - 1,p)
+                    best_value = max(best_value, val)
+            return best_value
+
+        else:  # self.active_player == 'MINIPLAYER':
+            optional_boards = self.generate_optional_boards(board,p)
+            avg = 0
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val = self.expectimax(optional_board, depth - 1,p)
+                avg += p*val
+            return avg
 
     def get_indices(self, board, value, time_limit) -> (int, int):
-        # TODO: erase the following line and implement this function.
-        raise NotImplementedError
+        depth = 0
+        prev_time = 0
+        time_left = time_limit
+        ret_value = (0, 0)
+        p = 0.1
+        if value == 2:
+            p = 0.9
 
-    # TODO: add here helper functions in class, if needed
+        while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
+            start_time = time.time()
+            index = 0
+            dict_board_score = {}
+            optional_boards = self.generate_optional_boards(board, value)
+            for optional_board in optional_boards:
+                dict_board_score[index] = self.expectimax(optional_board, depth, p)
+                index += 1
+            found_min_board = min(dict_board_score, key=dict_board_score.get)
+            board_to_compare = optional_boards[found_min_board]
+            for i in range(4):
+                for j in range(4):
+                    if board_to_compare[i][j] != board[i][j]:
+                        ret_value = (i, j)
+            print(depth)
+            depth += 1
+            end_time = time.time()
+            prev_time = end_time - start_time
+            time_left = time_left - prev_time
+            print(time_left)
+            print('board'+str(board))
+        return ret_value
+
+
+
+
+
 
 
 # Tournament
