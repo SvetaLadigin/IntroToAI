@@ -123,11 +123,9 @@ class ImprovedGreedyMovePlayer(AbstractMovePlayer):
 
     def maxCellValue(self, board):
         copy_board = board
-        # print(copy_board)
         max_value = 0
         for row in range(4):
             for col in range(4):
-                # print(copy_board[row][col])
                 if copy_board[row][col] > max_value:
                     max_value = copy_board[row][col]
         return max_value
@@ -227,7 +225,6 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
         for i in range(4):
             for j in range(4):
                 if time_limit -(time.time()-start_time) <= 0.05:
-                    #  print('time limit achieved :' + str(time_limit) + 'at depth: ' + str(depth))
                     raise TimeoutError()
                 if board[i][j] == 0:
                     new_board = copy.deepcopy(board)
@@ -252,7 +249,6 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
     def minimax(self, board, depth, time_limit):
         start_time = time.time()
         if time_limit <= 0.05:
-            #  print('time limit achieved :' + str(time_limit) + 'at depth: ' + str(depth))
             raise TimeoutError()
         if depth == 0:
             return self.score(board)
@@ -336,7 +332,6 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
         for i in range(4):
             for j in range(4):
                 if time_limit - (time.time() - start_time) <= 0.05:
-                    #  print('time limit achieved :' + str(time_limit) + 'at depth: ' + str(depth))
                     raise TimeoutError()
                 if board[i][j] == 0:
                     new_board = copy.deepcopy(board)
@@ -347,7 +342,6 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
     def minimax(self, board, depth, time_limit):
         start_time = time.time()
         if time_limit <= 0.05:
-            #  print('time limit achieved :' + str(time_limit) + 'at depth: ' + str(depth))
             raise TimeoutError()
         if depth == 0:
             return self.score(board)
@@ -372,8 +366,8 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
             return best_value
 
     def get_indices(self, board, value, time_limit) -> (int, int):
-        depth = 0
         time_left = time_limit
+        depth = 0
         ret_value = (0, 0)
         #  while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
         while True:
@@ -381,9 +375,9 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
                 start_time = time.time()
                 index = 0
                 dict_board_score = {}
-                optional_boards = self.generate_optional_boards(board, time_limit - (time.time()-start_time))
+                optional_boards = self.generate_optional_boards(board, time_left - (time.time()-start_time))
                 for optional_board in optional_boards:
-                    dict_board_score[index] = self.minimax(optional_board, depth,time_left - (time.time() - start_time))
+                    dict_board_score[index] = self.minimax(optional_board, depth, time_left - (time.time() - start_time))
                     index += 1
                 found_min_board = min(dict_board_score, key=dict_board_score.get)
                 board_to_compare = optional_boards[found_min_board]
@@ -433,10 +427,13 @@ class ABMovePlayer(AbstractMovePlayer):
         return cells_sum
 
     # GET THE NEXT SUCCESSORS OF A CERTAIN BOARD
-    def generate_optional_boards(self, board):
+    def generate_optional_boards(self, board, time_limit):
+        start_time = time.time()
         boards = list()
         for i in range(4):
             for j in range(4):
+                if time_limit - (time.time() - start_time) <= 0.05:
+                    raise TimeoutError()
                 if board[i][j] == 0:
                     new_board = copy.deepcopy(board)
                     new_board[i][j] = 2
@@ -457,7 +454,10 @@ class ABMovePlayer(AbstractMovePlayer):
                 return key
         return None
 
-    def minimax(self, board, depth, alpha, beta):
+    def minimax(self, board, depth, alpha, beta, time_limit):
+        start_time = time.time()
+        if time_limit <= 0.05:
+            raise TimeoutError()
         if depth == 0:
             return self.score(board)
         # best_value = 0 # Dont know if to initialize because return value
@@ -467,7 +467,7 @@ class ABMovePlayer(AbstractMovePlayer):
                 new_board, done, score = commands[move](board)
                 if done:
                     self.change_player('MINIPLAYER')
-                    val = self.minimax(new_board, depth - 1,alpha,beta)
+                    val = self.minimax(new_board, depth - 1, alpha, beta, time_limit - (time.time()-start_time))
                     best_value = max(best_value, val)
                     alpha = max(best_value,alpha)
                     if best_value >= beta:
@@ -476,10 +476,10 @@ class ABMovePlayer(AbstractMovePlayer):
 
         else:  # self.active_player == 'MINIPLAYER':
             best_value = math.inf
-            optional_boards = self.generate_optional_boards(board)
+            optional_boards = self.generate_optional_boards(board, time_limit - (time.time()-start_time))
             for optional_board in optional_boards:
                 self.change_player('MAXIPLAYER')
-                val = self.minimax(optional_board, depth - 1,alpha,beta)
+                val = self.minimax(optional_board, depth - 1, alpha, beta,time_limit - (time.time()-start_time))
                 best_value = min(best_value, val)
                 beta = max(best_value, beta)
                 if best_value <= alpha:
@@ -492,23 +492,24 @@ class ABMovePlayer(AbstractMovePlayer):
         depth = 0
         alpha = -math.inf
         beta = math.inf
-        prev_time = 0
         time_left = time_limit
         ret_value = 0
-        while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
-            start_time = time.time()
-            optional_moves_score = {}
-            for move in Move:
-                new_board, done, score = commands[move](board)
-                if done:
-                    optional_moves_score[move] = self.minimax(new_board, depth,alpha,beta)
-            ret_value = max(optional_moves_score, key=optional_moves_score.get)
-            print(depth)
+        #  while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
+        while True:
+            try:
+                start_time = time.time()
+                optional_moves_score = {}
+                for move in Move:
+                    new_board, done, score = commands[move](board)
+                    if done:
+                        optional_moves_score[move] = self.minimax(new_board, depth,alpha,beta, time_left - (time.time() - start_time))
+                ret_value = max(optional_moves_score, key=optional_moves_score.get)
+            except TimeoutError:
+                break
             depth += 1
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-            print(time_left)
         return ret_value
 
 # part D
@@ -541,10 +542,13 @@ class ExpectimaxMovePlayer(AbstractMovePlayer):
         return cells_sum
 
     # GET THE NEXT SUCCESSORS OF A CERTAIN BOARD
-    def generate_optional_boards(self, board, value):
+    def generate_optional_boards(self, board, value, time_limit):
+        start_time = time.time()
         boards = list()
         for i in range(4):
             for j in range(4):
+                if time_limit - (time.time() - start_time) <= 0.05:
+                    raise TimeoutError()
                 if board[i][j] == 0:
                     new_board = copy.deepcopy(board)
                     new_board[i][j] = value
@@ -565,7 +569,10 @@ class ExpectimaxMovePlayer(AbstractMovePlayer):
                 return key
         return None
 
-    def expectimax(self, board, depth):
+    def expectimax(self, board, depth, time_limit):
+        start_time = time.time()
+        if time_limit <= 0.05:
+            raise TimeoutError()
         if depth == 0:
             return self.score(board)
         # best_value = 0 # Dont know if to initialize because return value
@@ -575,43 +582,44 @@ class ExpectimaxMovePlayer(AbstractMovePlayer):
                 new_board, done, score = commands[move](board)
                 if done:
                     self.change_player('MINIPLAYER')
-                    val = self.expectimax(new_board, depth - 1)
+                    val = self.expectimax(new_board, depth - 1, time_limit - (time.time()-start_time))
                     best_value = max(best_value, val)
             return best_value
 
         else:  # self.active_player == 'MINIPLAYER':
             avg = 0
-            optional_boards = self.generate_optional_boards(board,2)
+            optional_boards = self.generate_optional_boards(board,2, time_limit - (time.time()-start_time))
             for optional_board in optional_boards:
                 self.change_player('MAXIPLAYER')
-                val_2 = self.expectimax(optional_board, depth - 1)
+                val_2 = self.expectimax(optional_board, depth - 1, time_limit - (time.time()-start_time))
                 avg += 0.9*val_2
-            optional_boards = self.generate_optional_boards(board, 4)
+            optional_boards = self.generate_optional_boards(board, 4, time_limit - (time.time()-start_time))
             for optional_board in optional_boards:
                 self.change_player('MAXIPLAYER')
-                val_4 = self.expectimax(optional_board, depth - 1)
+                val_4 = self.expectimax(optional_board, depth - 1, time_limit - (time.time()-start_time))
                 avg += 0.1 * val_4
             return avg
 
     def get_move(self, board, time_limit) -> Move:
-        depth = 0
-        prev_time = 0
         time_left = time_limit
+        depth = 0
         ret_value = 0
-        while time_left > (2 ** (depth - 1)) * prev_time and time_left > 0.02:
-            start_time = time.time()
-            optional_moves_score = {}
-            for move in Move:
-                new_board, done, score = commands[move](board)
-                if done:
-                    optional_moves_score[move] = self.expectimax(new_board, depth)
-            ret_value = max(optional_moves_score, key=optional_moves_score.get)
-            print(depth)
+        #  while time_left > (2 ** (depth - 1)) * prev_time and time_left > 0.02:
+        while True:
+            try:
+                start_time = time.time()
+                optional_moves_score = {}
+                for move in Move:
+                    new_board, done, score = commands[move](board)
+                    if done:
+                        optional_moves_score[move] = self.expectimax(new_board, depth,  time_left - (time.time()-start_time))
+                ret_value = max(optional_moves_score, key=optional_moves_score.get)
+            except TimeoutError:
+                break
             depth += 1
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-            print(time_left)
         return ret_value
 
 
@@ -640,17 +648,23 @@ class ExpectimaxIndexPlayer(AbstractIndexPlayer):
                  cells_sum += self.calcCellScore(board[row][col])
         return cells_sum
 
-    def generate_optional_boards(self, board, value):
+    def generate_optional_boards(self, board, value, time_limit):
+        start_time = time.time()
         boards = list()
         for i in range(4):
             for j in range(4):
+                if time_limit - (time.time() - start_time) <= 0.05:
+                    raise TimeoutError()
                 if board[i][j] == 0:
                     new_board = copy.deepcopy(board)
                     new_board[i][j] = value
                     boards.append(new_board)
         return boards
 
-    def expectimax(self, board, depth, p):
+    def expectimax(self, board, depth, p, time_limit):
+        start_time = time.time()
+        if time_limit <= 0.05:
+            raise TimeoutError()
         if depth == 0:
             return self.score(board)
         # best_value = 0 # Dont know if to initialize because return value
@@ -660,49 +674,50 @@ class ExpectimaxIndexPlayer(AbstractIndexPlayer):
                 new_board, done, score = commands[move](board)
                 if done:
                     self.change_player('MINIPLAYER')
-                    val = self.expectimax(new_board, depth - 1,p)
+                    val = self.expectimax(new_board, depth - 1,p, time_limit - (time.time()-start_time))
                     best_value = max(best_value, val)
             return best_value
 
         else:  # self.active_player == 'MINIPLAYER':
-            optional_boards = self.generate_optional_boards(board,p)
+            optional_boards = self.generate_optional_boards(board,p, time_limit - (time.time()-start_time))
             avg = 0
             for optional_board in optional_boards:
                 self.change_player('MAXIPLAYER')
-                val = self.expectimax(optional_board, depth - 1,p)
+                val = self.expectimax(optional_board, depth - 1,p, time_limit - (time.time()-start_time))
                 avg += p*val
             return avg
 
     def get_indices(self, board, value, time_limit) -> (int, int):
-        depth = 0
-        prev_time = 0
         time_left = time_limit
+        depth = 0
         ret_value = (0, 0)
         p = 0.1
         if value == 2:
             p = 0.9
 
-        while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
-            start_time = time.time()
-            index = 0
-            dict_board_score = {}
-            optional_boards = self.generate_optional_boards(board, value)
-            for optional_board in optional_boards:
-                dict_board_score[index] = self.expectimax(optional_board, depth, p)
-                index += 1
-            found_min_board = min(dict_board_score, key=dict_board_score.get)
-            board_to_compare = optional_boards[found_min_board]
-            for i in range(4):
-                for j in range(4):
-                    if board_to_compare[i][j] != board[i][j]:
-                        ret_value = (i, j)
-            print(depth)
+        #while time_left > (2**(depth-1))*prev_time and time_left > 0.02:
+        while True:
+            try:
+                start_time = time.time()
+                index = 0
+                dict_board_score = {}
+                optional_boards = self.generate_optional_boards(board, value, time_left - (time.time()-start_time))
+                for optional_board in optional_boards:
+                    dict_board_score[index] = self.expectimax(optional_board, depth, p, time_left - (time.time()-start_time))
+                    index += 1
+                found_min_board = min(dict_board_score, key=dict_board_score.get)
+                board_to_compare = optional_boards[found_min_board]
+                for i in range(4):
+                    for j in range(4):
+                        if board_to_compare[i][j] != board[i][j]:
+                            ret_value = (i, j)
+            except TimeoutError:
+                break
             depth += 1
             end_time = time.time()
             prev_time = end_time - start_time
             time_left = time_left - prev_time
-            print(time_left)
-            print('board'+str(board))
+            #  print('board'+str(board))
         return ret_value
 
 
