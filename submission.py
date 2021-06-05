@@ -283,12 +283,13 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
                 if done:
                     optional_moves_score[move] = self.minimax(new_board, depth)
             ret_value = max(optional_moves_score, key=optional_moves_score.get)
-            print(depth)
+
             depth += 1
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-            print(time_left)
+        print("depth "+str(depth))
+            # print(time_left)
         return ret_value
 
     # the function flow: on maxiplayer -> recursion on max total boards scores per move
@@ -376,13 +377,13 @@ class MiniMaxIndexPlayer(AbstractIndexPlayer):
                 for j in range(4):
                     if board_to_compare[i][j] != board[i][j]:
                         ret_value = (i, j)
-            print(depth)
+            # print(depth)
             depth += 1
             end_time = time.time()
             prev_time = end_time - start_time
             time_left = time_left - prev_time
-            print(time_left)
-            print('board'+str(board))
+            # print(time_left)
+            # print('board'+str(board))
         return ret_value
 
 
@@ -491,12 +492,12 @@ class ABMovePlayer(AbstractMovePlayer):
                 if done:
                     optional_moves_score[move] = self.minimax(new_board, depth,alpha,beta)
             ret_value = max(optional_moves_score, key=optional_moves_score.get)
-            print(depth)
             depth += 1
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-            print(time_left)
+            # print(time_left)
+        print("depth "+str(depth))
         return ret_value
 
 # part D
@@ -594,12 +595,12 @@ class ExpectimaxMovePlayer(AbstractMovePlayer):
                 if done:
                     optional_moves_score[move] = self.expectimax(new_board, depth)
             ret_value = max(optional_moves_score, key=optional_moves_score.get)
-            print(depth)
+            # print(depth)
             depth += 1
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-            print(time_left)
+            # print(time_left)
         return ret_value
 
 
