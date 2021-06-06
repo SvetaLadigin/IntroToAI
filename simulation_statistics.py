@@ -9,19 +9,24 @@ import pandas as pd
 def parse_output(output):
     dict = {}
     item2 = output.splitlines()
+    depth_list = []
+    step_counter = 0
     # item2[-2]
     print(item2)
     for line in item2:
         if b'depth' in line:
             new_line = line.decode().split(" ")
             output_depth = new_line[-1]
-            dict['depth'] = output_depth
+            depth_list.append(int(output_depth))
+            step_counter += 1
         if b'value' in line:
             new_line = line.decode().split(" ")
             output_tile = new_line[6]
             output_score = new_line[-1]
             dict['score'] = output_score
             dict['tile'] = output_tile
+    avg = sum(depth_list)/step_counter
+    dict['depth'] = avg
     return dict
 
 
@@ -29,7 +34,7 @@ list_of_outputs = []
 
 f = open("statistics.txt", "w")
 
-for line in range(1):
+for line in range(3):
     p = subprocess.Popen(["python3 main.py -player1 MiniMaxMovePlayer -player2 MiniMaxIndexPlayer -move_time 1"], bufsize=2048, shell=True,
     stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
     p.wait()

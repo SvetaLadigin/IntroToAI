@@ -292,6 +292,9 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
+
+
+        print("depth " + str(depth))
         return ret_value
 
     # the function flow: on maxiplayer -> recursion on max total boards scores per move
@@ -510,6 +513,7 @@ class ABMovePlayer(AbstractMovePlayer):
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
+        print("depth "+str(depth))
         return ret_value
 
 # part D

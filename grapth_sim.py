@@ -14,28 +14,37 @@ data = {}
 for line in f:
     params = line.split()
     print(params)
-    time.append(int(params[0]))
+    time.append(float(params[0]))
     agent.append(params[1])
-    tile.append(int(params[2]))
-    score.append(int(params[3]))
-    depth.append(int(params[4]))
+    tile.append(float(params[2]))
+    score.append(float(params[3]))
+    depth.append(float(params[4]))
 data['time'] = time
 data['agent'] = agent
 data['tile'] = tile
 data['score'] = score
 data['depth'] = depth
 new_data = pd.DataFrame.from_dict(data)
-avg_depth = new_data.groupby('time').depth.mean()
-print(avg_depth)
-avg_score = new_data.groupby('time').score.mean()
-# new_data.to_numpy()
-# gra = plt.plot(new_data['time'], new_data['depth'])
-# print(gra)
-# gra.show()
-graph = avg_depth.plot(xlabel='time', ylabel='depth', style='r')
-plt.savefig('time_depth.png')
+minimax_data = new_data.loc[new_data['agent'] == 'minimax']
+print(minimax_data)
+avg_depth_minimax = minimax_data.groupby('time').depth.mean()
+print(avg_depth_minimax)
+ab_data = new_data.loc[new_data['agent'] == 'abmove']
+print(ab_data)
+avg_depth_ab = ab_data.groupby('time').depth.mean()
+print(avg_depth_ab)
+graph = avg_depth_minimax.plot(xlabel='time', ylabel='depth', style='g')
+plt.savefig('time_depth_mini.png')
+plt.show()
+graph2 = avg_depth_ab.plot(xlabel='time', ylabel='depth', style='g')
+plt.savefig('time_depth_ab.png')
 plt.show()
 
-graph2 = avg_score.plot(xlabel='time', ylabel='score', style='g')
-plt.savefig('time_score.png')
+avg_score_minimax = minimax_data.groupby('time').score.mean()
+avg_score_ab = ab_data.groupby('time').score.mean()
+graph3 = avg_score_minimax.plot(xlabel='time', ylabel='score', style='r')
+plt.savefig('time_score_mini.png')
+plt.show()
+graph4 = avg_score_ab.plot(xlabel='time', ylabel='score', style='r')
+plt.savefig('time_score_ab.png')
 plt.show()
