@@ -946,5 +946,5 @@ class ContestMovePlayer(AbstractMovePlayer):
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-        print("depth " + str(depth))
+        #  print("depth " + str(depth))
         return ret_value
