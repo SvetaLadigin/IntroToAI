@@ -736,13 +736,158 @@ class ContestMovePlayer(AbstractMovePlayer):
     implement get_move function as you want to compete in the Tournament
     (you can add helper functions as you want)
     """
+    """Expectimax Move Player,
+    implement get_move function according to Expectimax algorithm.
+    (you can add helper functions as you want)
+    """
+
     def __init__(self):
         AbstractMovePlayer.__init__(self)
-        # TODO: add here if needed
+        self.active_player = 'MINIPLAYER'  # get move starts with Max Player
+
+    def change_player(self, player):
+        self.active_player = player
+
+    # WE CAN CALCULATE TIME FOR 1 BOARD SUCCESSORS INITIALIZATION AND THEN FOR TIME LIMIT
+    # MULTIPLY BY 2^DEPTH
+    def hotCorners(self, board):
+        max_value = self.maxCellValue(board)
+        grade = 0
+        for row in range(4):
+            for col in range(4):
+                if board[row][col] == max_value:
+                    if (row == 0 and col == 0) or (row == 3 and col == 3) or (row == 0 and col == 3) or (row == 3 and col == 0):
+                        grade += 2*(max_value)
+                        continue
+                    if (row == 1 and col == 1) or (row == 2 and col == 2) or (row == 1 and col == 2) or (row == 2 and col == 1):
+                        grade -= (max_value)
+                        continue
+                    grade -= (max_value)
+
+        return grade
+
+    def maxCellValue(self, board):
+        copy_board = board
+        max_value = 0
+        for row in range(4):
+            for col in range(4):
+                if copy_board[row][col] > max_value:
+                    max_value = copy_board[row][col]
+        return max_value
+
+    def calcCellScore(self, value):
+        if value <= 2:
+            return 0
+        return 2 * self.calcCellScore(value / 2) + value
+
+    def score(self, board):
+        cells_sum = 0
+        for row in range(4):
+            for col in range(4):
+                cells_sum += self.calcCellScore(board[row][col])
+        return cells_sum
+
+    def calculateNewHScore(self, board):
+        greedy_score = self.score(board)
+        max_value_cell = self.maxCellValue(board)
+        # empty_value = self.emptyCells(board)
+        # smoothness_score = self.smoothness(board)
+        # monoton_score = self.monotonus(board)
+        hot_corners = self.hotCorners(board)
+
+        score_fac = 0.2
+        max_value_cell_fac = 0.2
+        # empty_value_fac = 1
+        hot_corners_fac = 0.2
+        # smoothness_score_fac = 0.2
+        # monoton_score_fac = 0.2
+
+        return float(greedy_score)*score_fac\
+            + max_value_cell*max_value_cell_fac \
+            + hot_corners * hot_corners_fac
+            # + empty_value*empty_value_fac\
+
+               # + smoothness_score*smoothness_score_fac\
+               # + monoton_score*monoton_score_fac
+
+
+    # GET THE NEXT SUCCESSORS OF A CERTAIN BOARD
+    def generate_optional_boards(self, board, value, time_limit):
+        start_time = time.time()
+        boards = list()
+        for i in range(4):
+            for j in range(4):
+                if time_limit - (time.time() - start_time) <= 0.05:
+                    raise TimeoutError()
+                if board[i][j] == 0:
+                    new_board = copy.deepcopy(board)
+                    new_board[i][j] = value
+                    boards.append(new_board)
+        return boards
+
+    # score move by making greedy on all optional moves
+    def score_move(self, boards):
+        total_score_for_boards = 0
+        for board in boards:
+            total_score_for_boards = total_score_for_boards + self.score(board)
+        return total_score_for_boards
+
+    # get key by value for dict
+    def get_key(self, dict, val):
+        for key, value in dict.items():
+            if val == value:
+                return key
+        return None
+
+    def expectimax(self, board, depth, time_limit):
+        start_time = time.time()
+        if time_limit <= 0.05:
+            raise TimeoutError()
+        if depth == 0:
+            return self.calculateNewHScore(board)
+        # best_value = 0 # Dont know if to initialize because return value
+        if self.active_player == 'MAXIPLAYER':
+            best_value = -math.inf
+            for move in Move:
+                new_board, done, score = commands[move](board)
+                if done:
+                    self.change_player('MINIPLAYER')
+                    val = self.expectimax(new_board, depth - 1, time_limit - (time.time()-start_time))
+                    best_value = max(best_value, val)
+            return best_value
+
+        else:  # self.active_player == 'MINIPLAYER':
+            avg = 0
+            optional_boards = self.generate_optional_boards(board,2, time_limit - (time.time()-start_time))
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val_2 = self.expectimax(optional_board, depth - 1, time_limit - (time.time()-start_time))
+                avg += 0.9*val_2
+            optional_boards = self.generate_optional_boards(board, 4, time_limit - (time.time()-start_time))
+            for optional_board in optional_boards:
+                self.change_player('MAXIPLAYER')
+                val_4 = self.expectimax(optional_board, depth - 1, time_limit - (time.time()-start_time))
+                avg += 0.1 * val_4
+            return avg
 
     def get_move(self, board, time_limit) -> Move:
-        # TODO: erase the following line and implement this function.
-        raise NotImplementedError
-
-    # TODO: add here helper functions in class, if needed
-
+        time_left = time_limit
+        depth = 0
+        ret_value = 0
+        #  while time_left > (2 ** (depth - 1)) * prev_time and time_left > 0.02:
+        while True:
+            try:
+                start_time = time.time()
+                optional_moves_score = {}
+                for move in Move:
+                    new_board, done, score = commands[move](board)
+                    if done:
+                        optional_moves_score[move] = self.expectimax(new_board, depth,  time_left - (time.time()-start_time))
+                ret_value = max(optional_moves_score, key=optional_moves_score.get)
+            except TimeoutError:
+                break
+            depth += 1
+            end_time = time.time()
+            prev_time = float(end_time - start_time)
+            time_left = float(time_left - prev_time)
+        return ret_value

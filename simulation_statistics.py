@@ -34,7 +34,46 @@ list_of_outputs = []
 
 f = open("statistics.txt", "w")
 
-for line in range(3):
+for line in range(1):
+    p = subprocess.Popen(["python3 main.py -player1 ABMovePlayer -player2 MiniMaxIndexPlayer -move_time 1"],
+                         bufsize=2048, shell=True,
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+    p.wait()
+    output = p.stdout.read()
+    print(output)
+    parsed_output = parse_output(output)
+    final_append = [1, 'abmove', parsed_output.get('tile'), parsed_output.get('score'), parsed_output.get('depth')]
+    list_of_outputs.append(final_append)
+    print(list_of_outputs)
+    for element in final_append:
+        f.write(str(element) + " ")
+    f.write("\n")
+    p = subprocess.Popen(["python3 main.py -player1 ABMovePlayer -player2 MiniMaxIndexPlayer -move_time 2"],
+                         bufsize=2048, shell=True,
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+    p.wait()
+    output = p.stdout.read()
+    print(output)
+    parsed_output = parse_output(output)
+    final_append = [2, 'abmove', parsed_output.get('tile'), parsed_output.get('score'), parsed_output.get('depth')]
+    list_of_outputs.append(final_append)
+    print(list_of_outputs)
+    for element in final_append:
+        f.write(str(element) + " ")
+    f.write("\n")
+    p = subprocess.Popen(["python3 main.py -player1 ABMovePlayer -player2 MiniMaxIndexPlayer -move_time 4"],
+                         bufsize=2048, shell=True,
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+    p.wait()
+    output = p.stdout.read()
+    print(output)
+    parsed_output = parse_output(output)
+    final_append = [4, 'abmove', parsed_output.get('tile'), parsed_output.get('score'), parsed_output.get('depth')]
+    list_of_outputs.append(final_append)
+    print(list_of_outputs)
+    for element in final_append:
+        f.write(str(element) + " ")
+    f.write("\n")
     p = subprocess.Popen(["python3 main.py -player1 MiniMaxMovePlayer -player2 MiniMaxIndexPlayer -move_time 1"], bufsize=2048, shell=True,
     stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
     p.wait()
@@ -71,42 +110,7 @@ for line in range(3):
     for element in final_append:
         f.write(str(element) + " ")
     f.write("\n")
-    p = subprocess.Popen(["python3 main.py -player1 ABMovePlayer -player2 MiniMaxIndexPlayer -move_time 1"], bufsize=2048, shell=True,
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-    p.wait()
-    output = p.stdout.read()
-    print(output)
-    parsed_output = parse_output(output)
-    final_append = [1, 'abmove', parsed_output.get('tile'), parsed_output.get('score'), parsed_output.get('depth')]
-    list_of_outputs.append(final_append)
-    print(list_of_outputs)
-    for element in final_append:
-        f.write(str(element) + " ")
-    f.write("\n")
-    p = subprocess.Popen(["python3 main.py -player1 ABMovePlayer -player2 MiniMaxIndexPlayer -move_time 2"], bufsize=2048, shell=True,
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-    p.wait()
-    output = p.stdout.read()
-    print(output)
-    parsed_output = parse_output(output)
-    final_append = [2, 'abmove', parsed_output.get('tile'), parsed_output.get('score'), parsed_output.get('depth')]
-    list_of_outputs.append(final_append)
-    print(list_of_outputs)
-    for element in final_append:
-        f.write(str(element) + " ")
-    f.write("\n")
-    p = subprocess.Popen(["python3 main.py -player1 ABMovePlayer -player2 MiniMaxIndexPlayer -move_time 4"], bufsize=2048, shell=True,
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
-    p.wait()
-    output = p.stdout.read()
-    print(output)
-    parsed_output = parse_output(output)
-    final_append = [4, 'abmove', parsed_output.get('tile'), parsed_output.get('score'), parsed_output.get('depth')]
-    list_of_outputs.append(final_append)
-    print(list_of_outputs)
-    for element in final_append:
-        f.write(str(element) + " ")
-    f.write("\n")
+
 
 data = {}
 for line in f:
