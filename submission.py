@@ -292,9 +292,7 @@ class MiniMaxMovePlayer(AbstractMovePlayer):
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-
-
-        print("depth " + str(depth))
+        #  print("depth " + str(depth))
         return ret_value
 
     # the function flow: on maxiplayer -> recursion on max total boards scores per move
@@ -513,7 +511,7 @@ class ABMovePlayer(AbstractMovePlayer):
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
-        print("depth "+str(depth))
+        #  print("depth "+str(depth))
         return ret_value
 
 # part D
@@ -787,28 +785,86 @@ class ContestMovePlayer(AbstractMovePlayer):
                 cells_sum += self.calcCellScore(board[row][col])
         return cells_sum
 
-    def calculateNewHScore(self, board):
+    def emptyCells(self,board):
+        counter = 0
+        for i in range(4):
+            for j in range(4):
+                if board[i][j] == 0:
+                    counter += 1
+        return counter
+
+    def smoothness(self,board):
+        counter = 0
+        for row in range(4):
+            for col in range(4):
+                if board[row][col] != 0:
+                    i = 1
+                    while col+i < 4:
+                        if board[row][col + i] == 0:
+                            i += 1
+                            continue
+                        if board[row][col+i] == board[row][col]:
+                            counter += board[row][col]
+                        break
+
+                    i = 1
+                    while row+i < 4:
+                        if board[row + i][col] == 0:
+                            i += 1
+                            continue
+                        if board[row+i][col] == board[row][col]:
+                            counter += board[row][col]
+                        break
+        return counter
+
+    def monotonus(self,board):
+        ascending_up_to_down = 0
+        descending_up_to_down = 0
+        ascending_left_to_right = 0
+        descending_left_to_right = 0
+        for row in range(4):
+            for col in range(4):
+                if col + 1 < 4:
+                    if board[row][col] > board[row][col + 1]:
+                        descending_left_to_right -= board[row][col] - board[row][col + 1]
+                    else:
+                        ascending_left_to_right += board[row][col] - board[row][col + 1]
+                if row + 1 < 4:
+                    if board[row][col] > board[row + 1][col]:
+                        descending_up_to_down -= board[row][col] - board[row + 1][col]
+                    else:
+                        ascending_up_to_down += board[row][col] - board[row + 1][col]
+        return max(descending_left_to_right, ascending_left_to_right) + max(descending_up_to_down, ascending_up_to_down)
+
+
+    def calculateNewHScore(self, board,time_limit):
+        start_time = time.time()
         greedy_score = self.score(board)
         max_value_cell = self.maxCellValue(board)
-        # empty_value = self.emptyCells(board)
-        # smoothness_score = self.smoothness(board)
-        # monoton_score = self.monotonus(board)
+        if time_limit - (time.time() - start_time) <= 0.05:
+            raise TimeoutError()
+        empty_value = self.emptyCells(board)
+        smoothness_score = self.smoothness(board)
+        if time_limit - (time.time() - start_time) <= 0.05:
+            raise TimeoutError()
+        monoton_score = self.monotonus(board)
+        if time_limit - (time.time() - start_time) <= 0.05:
+            raise TimeoutError()
         hot_corners = self.hotCorners(board)
 
         score_fac = 0.2
         max_value_cell_fac = 0.2
-        # empty_value_fac = 1
+        empty_value_fac = 1
         hot_corners_fac = 0.2
-        # smoothness_score_fac = 0.2
-        # monoton_score_fac = 0.2
+        smoothness_score_fac = 0.2
+        monoton_score_fac = 0.2
 
         return float(greedy_score)*score_fac\
             + max_value_cell*max_value_cell_fac \
-            + hot_corners * hot_corners_fac
-            # + empty_value*empty_value_fac\
-
-               # + smoothness_score*smoothness_score_fac\
-               # + monoton_score*monoton_score_fac
+            + hot_corners * hot_corners_fac\
+            + empty_value*empty_value_fac\
+            + smoothness_score*smoothness_score_fac\
+            + monoton_score*monoton_score_fac
 
 
     # GET THE NEXT SUCCESSORS OF A CERTAIN BOARD
@@ -844,7 +900,7 @@ class ContestMovePlayer(AbstractMovePlayer):
         if time_limit <= 0.05:
             raise TimeoutError()
         if depth == 0:
-            return self.calculateNewHScore(board)
+            return self.calculateNewHScore(board,time_limit - (time.time()-start_time))
         # best_value = 0 # Dont know if to initialize because return value
         if self.active_player == 'MAXIPLAYER':
             best_value = -math.inf
@@ -890,4 +946,5 @@ class ContestMovePlayer(AbstractMovePlayer):
             end_time = time.time()
             prev_time = float(end_time - start_time)
             time_left = float(time_left - prev_time)
+        print("depth " + str(depth))
         return ret_value
